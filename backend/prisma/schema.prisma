@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PixKeyType {
+  CPF
+  CNPJ
+  EMAIL
+  PHONE
+  RANDOM
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  tradeName    String
+  logoPath     String?
+  email        String        @unique
+  passwordHash String
+  pixKeys      PixKey[]
+  links        PaymentLink[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model PixKey {
+  id         String        @id @default(uuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       PixKeyType
+  key        String
+  holderName String
+  city       String
+  label      String?
+  links      PaymentLink[]
+  createdAt  DateTime      @default(now())
+
+  @@index([userId])
+}
+
+model PaymentLink {
+  id              String      @id @default(uuid())
+  code            String      @unique
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pixKeyId        String
+  pixKey          PixKey      @relation(fields: [pixKeyId], references: [id], onDelete: Restrict)
+  title           String
+  description     String
+  amount          Decimal?    @db.Decimal(10, 2)
+  ctaPhrase       String      @default("Garante seu produto agora mesmo")
+  expirationHours Int         @default(1)
+  expiresAt       DateTime
+  photos          LinkPhoto[]
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])
+}
+
+model LinkPhoto {
+  id        String      @id @default(uuid())
+  linkId    String
+  link      PaymentLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  path      String
+  order     Int         @default(0)
+  createdAt DateTime    @default(now())
+
+  @@index([linkId])
+}
