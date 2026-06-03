@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, resolve } from 'path';
 import { randomBytes } from 'crypto';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
+export const UPLOAD_DIR = resolve(process.env.UPLOAD_DIR ?? 'uploads');
 const ALLOWED = /\.(png|jpe?g|webp|gif)$/i;
 
 export const imageStorage = diskStorage({
