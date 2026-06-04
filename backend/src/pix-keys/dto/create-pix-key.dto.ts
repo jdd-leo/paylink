@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { PixKeyType } from '@prisma/client';
 
 export class CreatePixKeyDto {
@@ -18,6 +18,9 @@ export class CreatePixKeyDto {
   @IsString()
   @MinLength(2)
   @MaxLength(60)
+  @Matches(/^[A-Za-zÀ-ÿ\s]+$/, {
+    message: 'A cidade não pode conter números ou caracteres especiais.',
+  })
   city!: string;
 
   @IsOptional()
