@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePixKeyDto } from './dto/create-pix-key.dto';
+import { validateAndNormalizePixKey } from '../common/pix-key';
 
 @Injectable()
 export class PixKeysService {
@@ -14,8 +19,12 @@ export class PixKeysService {
   }
 
   create(userId: string, dto: CreatePixKeyDto) {
+    const result = validateAndNormalizePixKey(dto.key, dto.type);
+    if (!result.ok) {
+      throw new BadRequestException(result.error);
+    }
     return this.prisma.pixKey.create({
-      data: { ...dto, userId },
+      data: { ...dto, key: result.key, userId },
     });
   }
 

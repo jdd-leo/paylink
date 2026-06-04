@@ -32,8 +32,36 @@ function crc16(payload: string): string {
   return crc.toString(16).toUpperCase().padStart(4, '0');
 }
 
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM';
+
+/**
+ * Normaliza a chave para o formato exigido pelo BR Code:
+ * - PHONE: E.164 (+55 + DDD + número). Telefone sem +55 é rejeitado pelos apps.
+ * - CPF/CNPJ: apenas dígitos.
+ * - EMAIL: minúsculas, sem espaços.
+ * - RANDOM (EVP): inalterada.
+ */
+export function normalizePixKey(key: string, keyType?: PixKeyType): string {
+  const trimmed = key.trim();
+  switch (keyType) {
+    case 'PHONE': {
+      const digits = trimmed.replace(/\D/g, '').replace(/^0+/, '');
+      const national = digits.startsWith('55') ? digits.slice(2) : digits;
+      return `+55${national}`;
+    }
+    case 'CPF':
+    case 'CNPJ':
+      return trimmed.replace(/\D/g, '');
+    case 'EMAIL':
+      return trimmed.toLowerCase();
+    default:
+      return trimmed;
+  }
+}
+
 export interface PixPayloadInput {
   key: string;
+  keyType?: PixKeyType;
   merchantName: string;
   merchantCity: string;
   amount?: string;
@@ -42,12 +70,14 @@ export interface PixPayloadInput {
 
 export function buildPixPayload({
   key,
+  keyType,
   merchantName,
   merchantCity,
   amount,
   txid = '***',
 }: PixPayloadInput): string {
-  const merchantAccount = emv('00', 'br.gov.bcb.pix') + emv('01', key);
+  const merchantAccount =
+    emv('00', 'br.gov.bcb.pix') + emv('01', normalizePixKey(key, keyType));
   const additionalData = emv('05', sanitize(txid, 25) || '***');
 
   let payload =

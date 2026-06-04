@@ -25,6 +25,7 @@ export class PublicController {
 
     const pixPayload = buildPixPayload({
       key: link.pixKey.key,
+      keyType: link.pixKey.type,
       merchantName: link.pixKey.holderName,
       merchantCity: link.pixKey.city,
       amount: link.amount ? link.amount.toFixed(2) : undefined,
