@@ -13,7 +13,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { imageFileFilter, imageStorage, MAX_IMAGE_SIZE } from '../common/upload';
+import { imageFileFilter, imageStorage, MAX_IMAGE_SIZE, uploadImage } from '../common/upload';
 
 @Controller('auth')
 export class AuthController {
@@ -42,7 +42,7 @@ export class AuthController {
     if (!dto?.email) {
       throw new BadRequestException('Dados inválidos');
     }
-    const logoPath = logo ? `/uploads/${logo.filename}` : null;
+    const logoPath = logo ? await uploadImage(logo) : null;
     return this.authService.register(dto, logoPath);
   }
 

@@ -15,7 +15,7 @@ import { CurrentUser, AuthUser } from '../common/current-user.decorator';
 import { LinksService } from './links.service';
 import { CreateLinkDto } from './dto/create-link.dto';
 import { ListLinksDto } from './dto/list-links.dto';
-import { imageFileFilter, imageStorage, MAX_IMAGE_SIZE } from '../common/upload';
+import { imageFileFilter, imageStorage, MAX_IMAGE_SIZE, uploadImage } from '../common/upload';
 
 @Controller('links')
 @UseGuards(JwtAuthGuard)
@@ -30,12 +30,12 @@ export class LinksController {
       limits: { fileSize: MAX_IMAGE_SIZE },
     }),
   )
-  create(
+  async create(
     @CurrentUser() user: AuthUser,
     @Body() dto: CreateLinkDto,
     @UploadedFiles() photos?: Express.Multer.File[],
   ) {
-    const paths = (photos ?? []).map((f) => `/uploads/${f.filename}`);
+    const paths = await Promise.all((photos ?? []).map((f) => uploadImage(f)));
     return this.service.create(user.userId, dto, paths);
   }
 

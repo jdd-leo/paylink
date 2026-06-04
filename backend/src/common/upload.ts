@@ -1,18 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { extname, resolve } from 'path';
 import { randomBytes } from 'crypto';
+import { put } from '@vercel/blob';
 
+// Mantido apenas para servir as logos antigas versionadas em /uploads (ServeStatic).
 export const UPLOAD_DIR = resolve(process.env.UPLOAD_DIR ?? 'uploads');
 const ALLOWED = /\.(png|jpe?g|webp|gif)$/i;
 
-export const imageStorage = diskStorage({
-  destination: UPLOAD_DIR,
-  filename: (_req, file, cb) => {
-    const name = randomBytes(16).toString('hex') + extname(file.originalname).toLowerCase();
-    cb(null, name);
-  },
-});
+// Buffer em memória: o disco do Render é efêmero, então enviamos ao Vercel Blob.
+export const imageStorage = memoryStorage();
 
 export function imageFileFilter(
   _req: unknown,
@@ -26,3 +23,14 @@ export function imageFileFilter(
 }
 
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+/** Envia o arquivo ao Vercel Blob e retorna a URL pública definitiva. */
+export async function uploadImage(file: Express.Multer.File): Promise<string> {
+  const key = randomBytes(16).toString('hex') + extname(file.originalname).toLowerCase();
+  const blob = await put(key, file.buffer, {
+    access: 'public',
+    contentType: file.mimetype,
+    addRandomSuffix: false,
+  });
+  return blob.url;
+}
