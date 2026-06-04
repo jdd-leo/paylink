@@ -56,9 +56,10 @@ export function LinksList() {
       'Garanta o seu agora — é rápido, seguro e pelo Pix.';
     const lines = [
       store ? `*${store}*` : null,
-      item.title,
+      `- ${item.title}`,
       '',
       `${cta}`,
+      '',
       `Clique no link abaixo e acesse a página de pagamento:`,
       publicUrl(item.code),
     ].filter((line) => line !== null);
