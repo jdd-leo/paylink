@@ -9,7 +9,7 @@ interface PixKeyOption {
   label: string | null;
 }
 
-const DEFAULT_CTA = 'Garante seu produto agora mesmo';
+const DEFAULT_CTA = 'Garanta seu produto agora mesmo';
 const MAX_PHOTOS = 5;
 
 export function CreateLink() {
