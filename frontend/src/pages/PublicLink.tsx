@@ -9,12 +9,18 @@ interface PublicLinkData {
   title: string;
   description: string;
   amount: number | null;
+  shipping: number | null;
+  products: { name: string; price: number }[];
   ctaPhrase: string;
   expiresAt: string;
   expired: boolean;
   photos: string[];
   merchant: { tradeName: string; logoPath: string | null };
   pix: { payload: string; key: string; type: string };
+}
+
+function formatBRL(value: number) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export function PublicLink() {
@@ -114,6 +120,23 @@ export function PublicLink() {
               <p className="text-slate-600 leading-relaxed whitespace-pre-line">
                 {data.description}
               </p>
+            )}
+
+            {data.products.length > 0 && (
+              <div className="border-t border-slate-100 pt-3 space-y-1.5 text-sm">
+                {data.products.map((p, i) => (
+                  <div key={i} className="flex justify-between text-slate-600">
+                    <span>{p.name}</span>
+                    <span className="tabular-nums">{formatBRL(p.price)}</span>
+                  </div>
+                ))}
+                {data.shipping != null && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Frete</span>
+                    <span className="tabular-nums">{formatBRL(data.shipping)}</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

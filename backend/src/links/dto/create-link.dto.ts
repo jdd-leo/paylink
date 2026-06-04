@@ -1,5 +1,7 @@
-import { Type } from 'class-transformer';
+import { plainToInstance, Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsInt,
   IsNumber,
   IsOptional,
@@ -9,7 +11,21 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+
+export class ProductDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name!: string;
+
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(99999999.99)
+  price!: number;
+}
 
 export class CreateLinkDto {
   @IsString()
@@ -17,10 +33,10 @@ export class CreateLinkDto {
   @MaxLength(120)
   title!: string;
 
+  @IsOptional()
   @IsString()
-  @MinLength(2)
   @MaxLength(2000)
-  description!: string;
+  description?: string;
 
   @IsOptional()
   @IsString()
@@ -28,11 +44,29 @@ export class CreateLinkDto {
   ctaPhrase?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    let parsed = value;
+    if (typeof value === 'string') {
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return Array.isArray(parsed) ? plainToInstance(ProductDto, parsed) : parsed;
+  })
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => ProductDto)
+  products?: ProductDto[];
+
+  @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0.01)
+  @Min(0)
   @Max(99999999.99)
-  amount?: number;
+  shipping?: number;
 
   @IsOptional()
   @Type(() => Number)

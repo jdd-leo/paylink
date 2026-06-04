@@ -12,6 +12,7 @@ export class PublicController {
       where: { code },
       include: {
         photos: { orderBy: { order: 'asc' } },
+        products: { orderBy: { order: 'asc' } },
         pixKey: true,
         user: { select: { tradeName: true, logoPath: true } },
       },
@@ -35,6 +36,11 @@ export class PublicController {
       title: link.title,
       description: link.description,
       amount: link.amount ? Number(link.amount) : null,
+      shipping: link.shipping ? Number(link.shipping) : null,
+      products: link.products.map((p) => ({
+        name: p.name,
+        price: Number(p.price),
+      })),
       ctaPhrase: link.ctaPhrase,
       expiresAt: link.expiresAt,
       expired,

@@ -28,22 +28,39 @@ export class LinksService {
     const hours = dto.expirationHours ?? 1;
     const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
 
+    const products = dto.products ?? [];
+    const shipping = dto.shipping ?? 0;
+    const productsTotal = products.reduce((sum, p) => sum + p.price, 0);
+    const total = productsTotal + shipping;
+
     return this.prisma.paymentLink.create({
       data: {
         code: generateCode(),
         userId,
         pixKeyId: dto.pixKeyId,
         title: dto.title,
-        description: dto.description,
-        amount: dto.amount ?? null,
+        description: dto.description || null,
+        amount: total > 0 ? total : null,
+        shipping: dto.shipping ?? null,
         ctaPhrase: dto.ctaPhrase || undefined,
         expirationHours: hours,
         expiresAt,
         photos: {
           create: photoPaths.map((path, order) => ({ path, order })),
         },
+        products: {
+          create: products.map((p, order) => ({
+            name: p.name,
+            price: p.price,
+            order,
+          })),
+        },
       },
-      include: { photos: { orderBy: { order: 'asc' } }, pixKey: true },
+      include: {
+        photos: { orderBy: { order: 'asc' } },
+        products: { orderBy: { order: 'asc' } },
+        pixKey: true,
+      },
     });
   }
 
@@ -57,6 +74,7 @@ export class LinksService {
         take: limit,
         include: {
           photos: { orderBy: { order: 'asc' } },
+          products: { orderBy: { order: 'asc' } },
           pixKey: { select: { id: true, label: true, key: true, type: true } },
         },
       }),
@@ -77,6 +95,7 @@ export class LinksService {
       where: { id, userId },
       include: {
         photos: { orderBy: { order: 'asc' } },
+        products: { orderBy: { order: 'asc' } },
         pixKey: true,
       },
     });

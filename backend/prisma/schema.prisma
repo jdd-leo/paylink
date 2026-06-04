@@ -51,15 +51,29 @@ model PaymentLink {
   pixKeyId        String
   pixKey          PixKey      @relation(fields: [pixKeyId], references: [id], onDelete: Restrict)
   title           String
-  description     String
-  amount          Decimal?    @db.Decimal(10, 2)
-  ctaPhrase       String      @default("Garante seu produto agora mesmo")
-  expirationHours Int         @default(1)
+  description     String?
+  amount          Decimal?      @db.Decimal(10, 2)
+  shipping        Decimal?      @db.Decimal(10, 2)
+  ctaPhrase       String        @default("Garante seu produto agora mesmo")
+  expirationHours Int           @default(1)
   expiresAt       DateTime
   photos          LinkPhoto[]
-  createdAt       DateTime    @default(now())
+  products        LinkProduct[]
+  createdAt       DateTime      @default(now())
 
   @@index([userId])
+}
+
+model LinkProduct {
+  id        String      @id @default(uuid())
+  linkId    String
+  link      PaymentLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  name      String
+  price     Decimal     @db.Decimal(10, 2)
+  order     Int         @default(0)
+  createdAt DateTime    @default(now())
+
+  @@index([linkId])
 }
 
 model LinkPhoto {
