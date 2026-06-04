@@ -1,4 +1,4 @@
-# Paylink
+# PagFacil
 
 App de criação de links de pagamento via Pix (MVP).
 

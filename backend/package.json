@@ -1,7 +1,7 @@
 {
   "name": "paylink-backend",
   "version": "0.1.0",
-  "description": "Paylink backend (NestJS)",
+  "description": "PagFacil backend (NestJS)",
   "private": true,
   "scripts": {
     "build": "nest build",

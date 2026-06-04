@@ -31,7 +31,7 @@ export function Login() {
         className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-5"
       >
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Paylink</h1>
+          <h1 className="text-2xl font-bold text-slate-900">PagFacil</h1>
           <p className="text-sm text-slate-500">Acesse o painel do gerenciador</p>
         </div>
         {error && (
