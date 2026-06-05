@@ -8,12 +8,17 @@ import {
 import { Navigate, useLocation } from 'react-router-dom';
 import { api, getToken, setToken } from './api';
 
+export type UserRole = 'ROOT' | 'CREATOR';
+export type UserPlan = 'FREE' | 'CREATOR' | 'PRO';
+
 export interface CurrentUser {
   id: string;
   name: string;
   tradeName: string;
   email: string;
   logoPath: string | null;
+  role: UserRole;
+  plan: UserPlan;
 }
 
 interface AuthContextValue {

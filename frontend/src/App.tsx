@@ -5,6 +5,7 @@ import { DashboardLayout } from './pages/DashboardLayout';
 import { LinksList } from './pages/LinksList';
 import { CreateLink } from './pages/CreateLink';
 import { PixKeys } from './pages/PixKeys';
+import { Users } from './pages/Users';
 import { PublicLink } from './pages/PublicLink';
 
 export function App() {
@@ -23,6 +24,7 @@ export function App() {
         <Route index element={<LinksList />} />
         <Route path="links/new" element={<CreateLink />} />
         <Route path="pix" element={<PixKeys />} />
+        <Route path="users" element={<Users />} />
       </Route>
       <Route path="/p/:code" element={<PublicLink />} />
       <Route path="*" element={<div className="p-8">Página não encontrada</div>} />

@@ -31,20 +31,31 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-## Criando o primeiro gerenciador
-O registro é protegido pelo `ADMIN_SECRET` definido no `.env` do backend:
+## Perfis e planos
+- **Perfil (`role`):** `ROOT` ou `CREATOR` (default). Só o `ROOT` acessa a tela
+  `/dashboard/users` para registrar, editar e excluir usuários.
+- **Plano (`plan`):** `FREE` (default), `CREATOR` ou `PRO` — armazenado/exibido,
+  sem limites aplicados por enquanto.
+
+## Criando o primeiro root
+Não há mais registro por `ADMIN_SECRET`. O primeiro usuário é criado direto no banco
+e promovido a `ROOT`. Use o Prisma Studio:
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
-  -H "x-admin-secret: <ADMIN_SECRET>" \
-  -F "name=Fulano" \
-  -F "tradeName=Loja do Fulano" \
-  -F "email=fulano@exemplo.com" \
-  -F "password=senha123" \
-  -F "logo=@/caminho/para/logo.png"
+cd backend
+npx prisma studio   # abre em http://localhost:5555
+```
+Crie um registro em `User` com `role = ROOT` e o `passwordHash` em bcrypt. Para gerar o hash:
+
+```bash
+cd backend
+node -e "console.log(require('bcryptjs').hashSync('senha123', 10))"
 ```
 
+Depois de logar como root, todos os demais usuários são criados pela tela `/dashboard/users`.
+
 ## Fluxo
+- Root acessa `/dashboard/users` para gerenciar (criar/editar/excluir) os gerenciadores.
 - Gerenciador acessa `/dashboard` (login obrigatório), cadastra chaves Pix em `/dashboard/pix`,
   cria links em `/dashboard/links/new`.
 - Cliente abre `/p/:code` (sem login) e vê produto, contador de expiração e QR Code Pix.

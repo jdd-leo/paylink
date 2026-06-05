@@ -15,6 +15,17 @@ enum PixKeyType {
   RANDOM
 }
 
+enum UserRole {
+  ROOT
+  CREATOR
+}
+
+enum UserPlan {
+  FREE
+  CREATOR
+  PRO
+}
+
 model User {
   id           String        @id @default(uuid())
   name         String
@@ -22,6 +33,8 @@ model User {
   logoPath     String?
   email        String        @unique
   passwordHash String
+  role         UserRole      @default(CREATOR)
+  plan         UserPlan      @default(FREE)
   pixKeys      PixKey[]
   links        PaymentLink[]
   createdAt    DateTime      @default(now())

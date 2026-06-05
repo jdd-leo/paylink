@@ -39,6 +39,11 @@ export function DashboardLayout() {
             <NavLink to="/dashboard/pix" className={linkClass}>
               Chaves Pix
             </NavLink>
+            {user?.role === 'ROOT' && (
+              <NavLink to="/dashboard/users" className={linkClass}>
+                Usuários
+              </NavLink>
+            )}
             <button
               onClick={onLogout}
               className="ml-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-red-600"
