@@ -30,6 +30,7 @@ export function LinksList() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -70,6 +71,31 @@ export function LinksList() {
     await navigator.clipboard.writeText(buildMessage(item));
     setCopiedMessage(item.code);
     setTimeout(() => setCopiedMessage(null), 1500);
+  }
+
+  async function deleteLink(item: LinkItem) {
+    if (
+      !confirm(
+        `Excluir o link "${item.title}"?\n\nAo excluir, os valores deste link não serão mais contabilizados na página de início para o cálculo de ticket médio e valor total.\n\nEsta ação não pode ser desfeita.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting(item.id);
+    try {
+      await api.delete(`/links/${item.id}`);
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.filter((i) => i.id !== item.id),
+              total: prev.total - 1,
+            }
+          : prev,
+      );
+    } finally {
+      setDeleting(null);
+    }
   }
 
   return (
@@ -150,6 +176,13 @@ export function LinksList() {
                 {copiedMessage === item.code
                   ? 'Copiado!'
                   : 'Copiar mensagem'}
+              </button>
+              <button
+                onClick={() => deleteLink(item)}
+                disabled={deleting === item.id}
+                className="text-sm border border-red-200 text-red-600 rounded-lg px-3 py-1.5 hover:bg-red-50 disabled:opacity-50"
+              >
+                {deleting === item.id ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>
           </div>

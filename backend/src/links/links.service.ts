@@ -153,4 +153,16 @@ export class LinksService {
     }
     return link;
   }
+
+  async remove(userId: string, id: string) {
+    const link = await this.prisma.paymentLink.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+    if (!link) {
+      throw new NotFoundException('Link não encontrado');
+    }
+    await this.prisma.paymentLink.delete({ where: { id } });
+    return { success: true };
+  }
 }
