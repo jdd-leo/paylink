@@ -33,6 +33,18 @@ export class LinksService {
     const productsTotal = products.reduce((sum, p) => sum + p.price, 0);
     const total = productsTotal + shipping;
 
+    const upsellIds = dto.upsellProductIds ?? [];
+    let validUpsellIds: string[] = [];
+    if (upsellIds.length) {
+      const owned = await this.prisma.upsellProduct.findMany({
+        where: { id: { in: upsellIds }, userId, active: true },
+        select: { id: true },
+      });
+      const ownedSet = new Set(owned.map((p) => p.id));
+      // Preserva a ordem de seleção enviada pelo creator.
+      validUpsellIds = upsellIds.filter((id) => ownedSet.has(id));
+    }
+
     return this.prisma.paymentLink.create({
       data: {
         code: generateCode(),
@@ -55,10 +67,17 @@ export class LinksService {
             order,
           })),
         },
+        upsells: {
+          create: validUpsellIds.map((productId, order) => ({
+            productId,
+            order,
+          })),
+        },
       },
       include: {
         photos: { orderBy: { order: 'asc' } },
         products: { orderBy: { order: 'asc' } },
+        upsells: { include: { product: true }, orderBy: { order: 'asc' } },
         pixKey: true,
       },
     });
@@ -145,6 +164,7 @@ export class LinksService {
       include: {
         photos: { orderBy: { order: 'asc' } },
         products: { orderBy: { order: 'asc' } },
+        upsells: { include: { product: true }, orderBy: { order: 'asc' } },
         pixKey: true,
       },
     });

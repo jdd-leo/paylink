@@ -1,8 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import { api, assetUrl } from '../api';
 import { Countdown } from '../components/Countdown';
+import { buildPixPayload, PixKeyType } from '../lib/pix';
+
+interface UpsellItem {
+  id: string;
+  name: string;
+  description: string | null;
+  photoPath: string | null;
+  price: number;
+}
 
 interface PublicLinkData {
   code: string;
@@ -11,12 +20,20 @@ interface PublicLinkData {
   amount: number | null;
   shipping: number | null;
   products: { name: string; price: number }[];
+  upsells: UpsellItem[];
   ctaPhrase: string;
   expiresAt: string;
   expired: boolean;
   photos: string[];
   merchant: { tradeName: string; logoPath: string | null };
-  pix: { payload: string; key: string; type: string };
+  pix: {
+    payload: string;
+    key: string;
+    type: string;
+    merchantName: string;
+    merchantCity: string;
+    txid: string;
+  };
 }
 
 function formatBRL(value: number) {
@@ -31,6 +48,40 @@ export function PublicLink() {
   const [expired, setExpired] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [selectedUpsell, setSelectedUpsell] = useState<Set<string>>(new Set());
+  const [zoomPhoto, setZoomPhoto] = useState<string | null>(null);
+
+  const upsellTotal = useMemo(() => {
+    if (!data) return 0;
+    return data.upsells
+      .filter((u) => selectedUpsell.has(u.id))
+      .reduce((sum, u) => sum + u.price, 0);
+  }, [data, selectedUpsell]);
+
+  const total = (data?.amount ?? 0) + upsellTotal;
+
+  // Recalcula o BR Code Pix no cliente conforme o cliente adiciona upsells.
+  const pixPayload = useMemo(() => {
+    if (!data) return '';
+    if (selectedUpsell.size === 0) return data.pix.payload;
+    return buildPixPayload({
+      key: data.pix.key,
+      keyType: data.pix.type as PixKeyType,
+      merchantName: data.pix.merchantName,
+      merchantCity: data.pix.merchantCity,
+      amount: total > 0 ? total.toFixed(2) : undefined,
+      txid: data.pix.txid,
+    });
+  }, [data, selectedUpsell, total]);
+
+  function toggleUpsell(id: string) {
+    setSelectedUpsell((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     api
@@ -45,7 +96,7 @@ export function PublicLink() {
 
   async function copyPix() {
     if (!data) return;
-    await navigator.clipboard.writeText(data.pix.payload);
+    await navigator.clipboard.writeText(pixPayload);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   }
@@ -75,15 +126,15 @@ export function PublicLink() {
             <img
               src={assetUrl(data.merchant.logoPath)}
               alt={data.merchant.tradeName}
-              className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-200"
+              className="h-16 w-16 rounded-full object-cover ring-1 ring-slate-200"
             />
           ) : (
-            <div className="h-11 w-11 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+            <div className="h-16 w-16 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl">
               {data.merchant.tradeName.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="leading-tight">
-            <p className="font-bold text-slate-900">{data.merchant.tradeName}</p>
+            <p className="text-xl font-bold text-slate-900">{data.merchant.tradeName}</p>
             <p className="flex items-center gap-1 text-xs text-slate-500">
               <svg className="h-3 w-3 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
                 <path
@@ -179,7 +230,78 @@ export function PublicLink() {
           </section>
         )}
 
-        {/* 3. Pagamento via Pix */}
+        {/* 3. Produtos de upsell */}
+        {!expired && data.upsells.length > 0 && (
+          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100">
+              <p className="font-semibold text-slate-900">Adicione ao seu pedido</p>
+              <p className="text-xs text-indigo-600 font-medium">
+                Promoções exclusivas somente aqui!
+              </p>
+            </div>
+            <div className="p-3 space-y-2">
+              {data.upsells.map((u) => {
+                const selected = selectedUpsell.has(u.id);
+                return (
+                  <div
+                    key={u.id}
+                    className={`flex items-center gap-3 rounded-xl border p-2.5 transition ${
+                      selected ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'
+                    }`}
+                  >
+                    {u.photoPath ? (
+                      <button
+                        type="button"
+                        onClick={() => setZoomPhoto(assetUrl(u.photoPath) ?? null)}
+                        className="h-20 w-20 rounded-lg overflow-hidden border border-slate-200 shrink-0"
+                        aria-label={`Ampliar foto de ${u.name}`}
+                      >
+                        <img
+                          src={assetUrl(u.photoPath)}
+                          alt={u.name}
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <div className="h-20 w-20 rounded-lg bg-slate-100 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-slate-900 truncate">{u.name}</p>
+                      {u.description && (
+                        <p className="text-xs text-slate-500 line-clamp-2">
+                          {u.description}
+                        </p>
+                      )}
+                      <p className="text-sm font-semibold text-slate-700">
+                        {formatBRL(u.price)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => toggleUpsell(u.id)}
+                      className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                        selected
+                          ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      }`}
+                    >
+                      {selected ? 'Remover' : 'Adicionar'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {total > 0 && (
+              <div className="flex items-baseline justify-between border-t border-slate-100 px-5 py-3">
+                <span className="text-sm font-medium text-slate-500">Total</span>
+                <span className="text-xl font-extrabold text-slate-900">
+                  {formatBRL(total)}
+                </span>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* 4. Pagamento via Pix */}
         {!expired ? (
           <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="bg-amber-50 border-b border-amber-100 px-5 py-3 text-center">
@@ -196,7 +318,7 @@ export function PublicLink() {
 
             <div className="p-5 flex flex-col items-center gap-4">
               <div className="bg-white p-3 rounded-xl border border-slate-200">
-                <QRCodeCanvas value={data.pix.payload} size={220} />
+                <QRCodeCanvas value={pixPayload} size={220} />
               </div>
               <p className="text-sm text-slate-500 text-center">
                 Abra o app do seu banco e escaneie o QR Code para pagar
@@ -211,7 +333,7 @@ export function PublicLink() {
                 <div className="flex gap-2">
                   <input
                     readOnly
-                    value={data.pix.payload}
+                    value={pixPayload}
                     className="flex-1 min-w-0 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-600"
                   />
                   <button
@@ -244,6 +366,29 @@ export function PublicLink() {
           Ambiente seguro · seus dados são protegidos
         </footer>
       </div>
+
+      {zoomPhoto && (
+        <div
+          onClick={() => setZoomPhoto(null)}
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+        >
+          <button
+            onClick={() => setZoomPhoto(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white"
+            aria-label="Fechar"
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+          <img
+            src={zoomPhoto}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] max-w-full rounded-xl object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }

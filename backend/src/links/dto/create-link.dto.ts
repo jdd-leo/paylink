@@ -75,6 +75,20 @@ export class CreateLinkDto {
   @Max(24)
   expirationHours?: number;
 
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  })
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('all', { each: true })
+  upsellProductIds?: string[];
+
   @IsUUID()
   pixKeyId!: string;
 }

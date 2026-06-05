@@ -6,6 +6,7 @@ import { Dashboard } from './pages/Dashboard';
 import { LinksList } from './pages/LinksList';
 import { CreateLink } from './pages/CreateLink';
 import { PixKeys } from './pages/PixKeys';
+import { UpsellProducts } from './pages/UpsellProducts';
 import { Users } from './pages/Users';
 import { PublicLink } from './pages/PublicLink';
 
@@ -26,6 +27,7 @@ export function App() {
         <Route path="links" element={<LinksList />} />
         <Route path="links/new" element={<CreateLink />} />
         <Route path="pix" element={<PixKeys />} />
+        <Route path="products" element={<UpsellProducts />} />
         <Route path="users" element={<Users />} />
       </Route>
       <Route path="/p/:code" element={<PublicLink />} />

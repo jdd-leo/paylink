@@ -39,6 +39,13 @@ export function DashboardLayout() {
         Links
       </NavLink>
       <NavLink
+        to="/dashboard/products"
+        className={linkClass}
+        onClick={() => setMenuOpen(false)}
+      >
+        Produtos
+      </NavLink>
+      <NavLink
         to="/dashboard/pix"
         className={linkClass}
         onClick={() => setMenuOpen(false)}

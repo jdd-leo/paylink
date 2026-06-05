@@ -1,12 +1,19 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api, assetUrl } from '../api';
 
 interface PixKeyOption {
   id: string;
   type: string;
   key: string;
   label: string | null;
+}
+
+interface UpsellOption {
+  id: string;
+  name: string;
+  photoPath: string | null;
+  price: number;
 }
 
 const DEFAULT_CTA = 'Garanta seu produto agora mesmo';
@@ -36,6 +43,8 @@ export function CreateLink() {
   const [expirationHours, setExpirationHours] = useState(1);
   const [pixKeyId, setPixKeyId] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
+  const [upsellOptions, setUpsellOptions] = useState<UpsellOption[]>([]);
+  const [selectedUpsell, setSelectedUpsell] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -47,7 +56,19 @@ export function CreateLink() {
       setPixKeys(res.data);
       if (res.data[0]) setPixKeyId(res.data[0].id);
     });
+    api
+      .get<UpsellOption[]>('/upsell-products?activeOnly=true')
+      .then((res) => setUpsellOptions(res.data));
   }, []);
+
+  function toggleUpsell(id: string) {
+    setSelectedUpsell((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   function updateProduct(index: number, field: keyof ProductItem, value: string) {
     setProducts((prev) =>
@@ -104,6 +125,9 @@ export function CreateLink() {
       }
       fd.append('expirationHours', String(expirationHours));
       fd.append('pixKeyId', pixKeyId);
+      if (selectedUpsell.size) {
+        fd.append('upsellProductIds', JSON.stringify([...selectedUpsell]));
+      }
       photos.forEach((p) => fd.append('photos', p));
       await api.post('/links', fd);
       navigate('/dashboard/links');
@@ -224,6 +248,81 @@ export function CreateLink() {
             />
           </div>
         </div>
+
+        {upsellOptions.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-700">
+                Produtos de upsell (opcional)
+              </label>
+              <div className="flex gap-3 text-sm">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedUpsell(new Set(upsellOptions.map((u) => u.id)))
+                  }
+                  className="font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  Adicionar todos
+                </button>
+                {selectedUpsell.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUpsell(new Set())}
+                    className="font-medium text-slate-400 hover:text-slate-600"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 -mt-1">
+              Aparecem como adicional na página do cliente, somando ao total.
+            </p>
+            <div className="grid gap-2">
+              {upsellOptions.map((u) => {
+                const selected = selectedUpsell.has(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => toggleUpsell(u.id)}
+                    className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${
+                      selected
+                        ? 'border-indigo-600 bg-indigo-50'
+                        : 'border-slate-300 hover:border-slate-400'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      readOnly
+                      checked={selected}
+                      className="h-4 w-4 accent-indigo-600 shrink-0"
+                    />
+                    {u.photoPath ? (
+                      <img
+                        src={assetUrl(u.photoPath)}
+                        alt=""
+                        className="h-10 w-10 rounded-md object-cover border border-slate-200 shrink-0"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-md bg-slate-100 shrink-0" />
+                    )}
+                    <span className="flex-1 min-w-0 truncate text-sm text-slate-700">
+                      {u.name}
+                    </span>
+                    <span className="text-sm font-medium text-slate-700 shrink-0">
+                      {u.price.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">

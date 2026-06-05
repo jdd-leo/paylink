@@ -13,6 +13,11 @@ export class PublicController {
       include: {
         photos: { orderBy: { order: 'asc' } },
         products: { orderBy: { order: 'asc' } },
+        upsells: {
+          where: { product: { active: true } },
+          include: { product: true },
+          orderBy: { order: 'asc' },
+        },
         pixKey: true,
         user: { select: { tradeName: true, logoPath: true } },
       },
@@ -42,6 +47,13 @@ export class PublicController {
         name: p.name,
         price: Number(p.price),
       })),
+      upsells: link.upsells.map((u) => ({
+        id: u.product.id,
+        name: u.product.name,
+        description: u.product.description,
+        photoPath: u.product.photoPath,
+        price: Number(u.product.price),
+      })),
       ctaPhrase: link.ctaPhrase,
       expiresAt: link.expiresAt,
       expired,
@@ -54,6 +66,9 @@ export class PublicController {
         payload: pixPayload,
         key: link.pixKey.key,
         type: link.pixKey.type,
+        merchantName: link.pixKey.holderName,
+        merchantCity: link.pixKey.city,
+        txid: link.code,
       },
     };
   }

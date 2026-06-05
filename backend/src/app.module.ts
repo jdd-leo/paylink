@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PixKeysModule } from './pix-keys/pix-keys.module';
 import { LinksModule } from './links/links.module';
+import { UpsellProductsModule } from './upsell-products/upsell-products.module';
 import { PublicModule } from './public/public.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { PublicModule } from './public/public.module';
     UsersModule,
     PixKeysModule,
     LinksModule,
+    UpsellProductsModule,
     PublicModule,
   ],
 })

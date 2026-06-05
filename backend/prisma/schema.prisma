@@ -37,6 +37,7 @@ model User {
   plan         UserPlan      @default(FREE)
   pixKeys      PixKey[]
   links        PaymentLink[]
+  upsellProducts UpsellProduct[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -72,6 +73,7 @@ model PaymentLink {
   expiresAt       DateTime
   photos          LinkPhoto[]
   products        LinkProduct[]
+  upsells         LinkUpsell[]
   createdAt       DateTime      @default(now())
 
   @@index([userId])
@@ -98,4 +100,33 @@ model LinkPhoto {
   createdAt DateTime    @default(now())
 
   @@index([linkId])
+}
+
+model UpsellProduct {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  photoPath   String?
+  price       Decimal      @db.Decimal(10, 2)
+  active      Boolean      @default(true)
+  links       LinkUpsell[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+model LinkUpsell {
+  id        String        @id @default(uuid())
+  linkId    String
+  link      PaymentLink   @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  productId String
+  product   UpsellProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order     Int           @default(0)
+
+  @@unique([linkId, productId])
+  @@index([linkId])
+  @@index([productId])
 }
