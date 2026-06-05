@@ -106,7 +106,7 @@ export function CreateLink() {
       fd.append('pixKeyId', pixKeyId);
       photos.forEach((p) => fd.append('photos', p));
       await api.post('/links', fd);
-      navigate('/dashboard');
+      navigate('/dashboard/links');
     } catch {
       setError('Não foi possível criar o link.');
     } finally {
