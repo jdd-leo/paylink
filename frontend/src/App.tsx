@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './auth';
 import { Login } from './pages/Login';
 import { DashboardLayout } from './pages/DashboardLayout';
+import { Dashboard } from './pages/Dashboard';
 import { LinksList } from './pages/LinksList';
 import { CreateLink } from './pages/CreateLink';
 import { PixKeys } from './pages/PixKeys';
@@ -21,7 +22,8 @@ export function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<LinksList />} />
+        <Route index element={<Dashboard />} />
+        <Route path="links" element={<LinksList />} />
         <Route path="links/new" element={<CreateLink />} />
         <Route path="pix" element={<PixKeys />} />
         <Route path="users" element={<Users />} />

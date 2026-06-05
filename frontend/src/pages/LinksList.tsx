@@ -96,37 +96,39 @@ export function LinksList() {
         {data?.items.map((item) => (
           <div
             key={item.id}
-            className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4"
+            className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
           >
-            <div className="h-16 w-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
-              {item.photos[0] && (
-                <img
-                  src={assetUrl(item.photos[0].path)}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-slate-900 truncate">
-                {item.title}
-                {item.amount != null && (
-                  <span className="ml-2 text-emerald-600">
-                    {Number(item.amount).toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </span>
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div className="h-16 w-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                {item.photos[0] && (
+                  <img
+                    src={assetUrl(item.photos[0].path)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 )}
-              </p>
-              <p className="text-sm text-slate-500">
-                Expira em {new Date(item.expiresAt).toLocaleString('pt-BR')}
-              </p>
-              <p className="text-xs text-slate-400 truncate">
-                Pix: {item.pixKey.label || item.pixKey.key}
-              </p>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-900 truncate">
+                  {item.title}
+                  {item.amount != null && (
+                    <span className="ml-2 text-emerald-600">
+                      {Number(item.amount).toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </span>
+                  )}
+                </p>
+                <p className="text-sm text-slate-500">
+                  Expira em {new Date(item.expiresAt).toLocaleString('pt-BR')}
+                </p>
+                <p className="text-xs text-slate-400 truncate">
+                  Pix: {item.pixKey.label || item.pixKey.key}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
               <a
                 href={publicUrl(item.code)}
                 target="_blank"

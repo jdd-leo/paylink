@@ -67,6 +67,12 @@ export class UsersController {
     return this.users.list();
   }
 
+  @Get('stats')
+  @UseGuards(RootGuard)
+  overview() {
+    return this.users.overview();
+  }
+
   @Post()
   @UseGuards(RootGuard)
   @UseInterceptors(logoInterceptor)

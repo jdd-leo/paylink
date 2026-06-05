@@ -44,6 +44,11 @@ export class LinksController {
     return this.service.list(user.userId, query);
   }
 
+  @Get('stats')
+  stats(@CurrentUser() user: AuthUser) {
+    return this.service.stats(user.userId);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.service.findOne(user.userId, id);

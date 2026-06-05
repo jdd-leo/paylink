@@ -90,6 +90,55 @@ export class LinksService {
     };
   }
 
+  async stats(userId: string) {
+    const now = new Date();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [total, active, last7, pixKeys, activeValue, ticket, recent] =
+      await this.prisma.$transaction([
+        this.prisma.paymentLink.count({ where: { userId } }),
+        this.prisma.paymentLink.count({
+          where: { userId, expiresAt: { gt: now } },
+        }),
+        this.prisma.paymentLink.count({
+          where: { userId, createdAt: { gte: sevenDaysAgo } },
+        }),
+        this.prisma.pixKey.count({ where: { userId } }),
+        this.prisma.paymentLink.aggregate({
+          where: { userId, amount: { not: null }, expiresAt: { gt: now } },
+          _sum: { amount: true },
+        }),
+        this.prisma.paymentLink.aggregate({
+          where: { userId, amount: { not: null } },
+          _avg: { amount: true },
+        }),
+        this.prisma.paymentLink.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            amount: true,
+            expiresAt: true,
+            createdAt: true,
+          },
+        }),
+      ]);
+
+    return {
+      totalLinks: total,
+      activeLinks: active,
+      expiredLinks: total - active,
+      last7Days: last7,
+      pixKeysCount: pixKeys,
+      activeValue: activeValue._sum.amount ?? 0,
+      avgTicket: ticket._avg.amount ?? 0,
+      recent,
+    };
+  }
+
   async findOne(userId: string, id: string) {
     const link = await this.prisma.paymentLink.findFirst({
       where: { id, userId },

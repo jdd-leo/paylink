@@ -30,6 +30,23 @@ export class UsersService {
     });
   }
 
+  async overview() {
+    const [totalUsers, totalLinks, free, creator, pro] =
+      await this.prisma.$transaction([
+        this.prisma.user.count(),
+        this.prisma.paymentLink.count(),
+        this.prisma.user.count({ where: { plan: 'FREE' } }),
+        this.prisma.user.count({ where: { plan: 'CREATOR' } }),
+        this.prisma.user.count({ where: { plan: 'PRO' } }),
+      ]);
+
+    return {
+      totalUsers,
+      totalLinks,
+      plans: { FREE: free, CREATOR: creator, PRO: pro },
+    };
+  }
+
   async create(dto: CreateUserDto, logoPath: string | null) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
